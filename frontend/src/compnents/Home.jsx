@@ -1,14 +1,10 @@
 import HeroBanner from "./Herosection.jsx";
-import Navbar from "./Navbar.jsx";
-import Slide from "./SLide.jsx";
 import Store from "./Store.jsx";
 
 function Home(){
     return(
-        <div>
-           <Navbar/>
+        <div className="">
            <HeroBanner/>
-           {/* <Slide/> */}
            <Store/>
         </div>
     )

@@ -1,97 +1,113 @@
-import axios from "axios";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { setLogin } from '../action';
-import { connect } from 'react-redux';
+import axios from "axios";
+import { connect } from "react-redux";
+import { setLogin, setProfile } from "../action";
 
-function Login({ setLogin }) {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: ""
-  });
+function LoginPage({setLogin, setProfile}) {
+    const [formData, setFormData] = useState({
+        email: "",
+        password: "",
+    });
 
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
-  // Handle input changes
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
 
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    // Handle form submission
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError("");
 
-    try {
-      const response = await axios.post(
-        import.meta.env.VITE_API_URL + `/auth/login`,
-        {
-          email: formData.email,
-          password: formData.password,
-        },
-        { withCredentials: true } // Enable cookies for authentication
-      );
-      alert("Login Successfully");
-      console.log("Login Successful:", response.data);
-      setLogin(1);
-      navigate("/");
-      window.location.reload();
-    } catch (err) {
-      setError(err.response?.data?.message || "Login failed!");
-    }
-  };
+        try {
+            const response = await axios.post(
+                import.meta.env.VITE_API_URL+`/auth/login`,
+                {
+                    email: formData.email,
+                    password: formData.password,
+                },
+                { withCredentials: true } // Enable cookies for authentication
+            );
 
-  return (
-    <div className="bg-gray-100 flex items-center justify-center">
-      <div className="w-80 border-2 absolute top-40 max-w-md bg-white rounded-lg shadow-md">
-        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800">Login</h2>
-        {error && <p className="text-red-500 text-center">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-2">
-          <div className="p-2">
-            <label className="block mb-1 text-sm font-medium text-gray-700">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter email"
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-          <div className="p-2">
-            <label className="block mb-1 text-sm font-medium text-gray-700">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}  
-              onChange={handleChange}
-              placeholder="Enter password"
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
+            // console.log("Login Successful:", response.data.user);
+            setLogin(1)
+            setProfile(response.data.user);
 
-          <div className="p-2">
-            <button
-              type="submit"
-              className="w-full px-4 py-2 font-semibold text-black bg-blue-500 hover:bg-blue-600 rounded-md"
-            >
-              Submit
-            </button>
-          </div>
-          <div className="p-2 flex justify-around text-sm">
-            <span>Don't have an account?</span>
-            <Link to="/register" className="text-amber-700 hover:underline">Sign up</Link>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+            navigate("/");
+        } catch (err) {
+            setError(err.response?.data?.message || "Login failed!");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex select-none justify-center items-center h-auto bg-white p-20">
+            <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md border">
+                <h2 className="text-center text-2xl font-bold text-gray-800">Welcome Back</h2>
+                <p className="text-center text-gray-600 mb-6">Login to your account</p>
+
+                {error && <p className="text-red-500 text-center">{error}</p>}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700">Email</label>
+                        <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            className="w-full p-2 border rounded-md border-black shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-600 text-darkText"
+                            placeholder="Enter your email"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700">Password</label>
+                        <input
+                            type="password"
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            className="w-full p-2 border rounded-md border-black shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-600 text-darkText"
+                            placeholder="Enter your password"
+                            required
+                        />
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                        <Link to="/forgotpassword" className="text-bg-amber-400 hover:underline">Forgot password?</Link>
+                    </div>
+                    <button
+                        type="submit"
+                        className={`w-full py-2 rounded-md font-bold ${
+                            loading ? "bg-gray-400" : "bg-amber-400 hover:bg-ring-amber-600"
+                        } text-white`}
+                        disabled={loading}
+                    >
+                        {loading ? "Logging in..." : "Login"}
+                    </button>
+                </form>
+
+                <p className="text-center text-sm text-gray-600 mt-4">
+                    Don't have an account? <Link to="/register" className="text-bg-amber-400 hover:underline">Sign up</Link>
+                </p>
+            </div>
+        </div>
+    );
 }
 
-// Redux connection
-const connectToStore = (state) => ({ commonData: state });
-const dispatchToStore = (dispatch) => ({
-  setLogin: (value) => dispatch(setLogin(value)),
-});
+let connectToStore = (state) => ({ commonData: state });
+let dispatchToStore = (dispatch) => (
+    {
+        setLogin: (value) => dispatch(setLogin(value)),
+        setProfile:(value)=>dispatch(setProfile(value)),
 
-export default connect(connectToStore, dispatchToStore)(Login);
+    }
+);
+export default connect(connectToStore, dispatchToStore)(LoginPage);

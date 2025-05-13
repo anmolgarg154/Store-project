@@ -22,7 +22,7 @@ const signup = async (req, res) => {
         role,
       },
     });
-         console.log("User details :" , user)
+        //  console.log("User details :" , user)
     return res.status(201).json({
       message: "User registered successfully",
       success: true,
@@ -57,6 +57,7 @@ const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        address: user.address
       },
     });
   } catch (error) {
