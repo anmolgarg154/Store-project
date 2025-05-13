@@ -1,0 +1,1 @@
+export let setLogin = (value)=>({type:'setLogin', value})
