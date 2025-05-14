@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDataContext } from '../context/DataContext';
 import { connect } from "react-redux";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 function Store({ commonData }) {
   const { store, refreshStoreData } = useDataContext();
@@ -9,11 +10,12 @@ function Store({ commonData }) {
   const [submitted, setSubmitted] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [storeError, setStoreError] = useState(false);
+  const navigate = useNavigate();
 
-  // Initialize selectedCard when data becomes available
   useEffect(() => {
     if (store?.store?.length > 0) {
-      // If we already have a selectedCard, find and update it with fresh data
+      setStoreError(false);
       if (selectedCard) {
         const updatedCard = store.store.find(card => card.id === selectedCard.id);
         if (updatedCard) {
@@ -22,6 +24,8 @@ function Store({ commonData }) {
       } else {
         setSelectedCard(store.store[0]);
       }
+    } else if (store && Array.isArray(store.store) && store.store.length === 0) {
+      setStoreError(true);
     }
   }, [selectedCard, store]);
 
@@ -29,38 +33,35 @@ function Store({ commonData }) {
     e.preventDefault();
     if (!selectedCard) return;
     if (commonData.islogin === 0) {
-      alert("Please Login!");
+      navigate("/login");
       return;
     }
-    
+
     setIsSubmitting(true);
 
     try {
       await axios.post(
         import.meta.env.VITE_API_URL + `/store/addRating`,
         { storeId: selectedCard.id, rate: rating, userId: commonData?.profile.id },
-        { withCredentials: true } // Enable cookies for authentication
+        { withCredentials: true }
       );
-      
-      // Refresh store data to get updated ratings
+
       if (refreshStoreData) {
         await refreshStoreData();
       } else {
-        // Fallback if refreshStoreData is not available: manually update the selectedCard
         const newRating = {
-          id: Date.now(), // Temporary ID for UI purposes
+          id: Date.now(),
           rate: rating,
           userId: commonData?.profile.id,
           storeId: selectedCard.id
         };
-        
+
         setSelectedCard(prev => ({
           ...prev,
           ratings: [...prev.ratings, newRating]
         }));
       }
-      
-      // Success notification
+
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 3000);
       setRating(0);
@@ -71,33 +72,41 @@ function Store({ commonData }) {
     }
   };
 
-  // Calculate average rating
   const calculateAverageRating = (ratings) => {
     if (!ratings || ratings.length === 0) return "No ratings yet";
-    
     const sum = ratings.reduce((total, ratingObj) => total + ratingObj.rate, 0);
     return (sum / ratings.length).toFixed(1);
   };
 
-  // Show a loading state if data hasn't loaded yet
+  if (storeError) {
+    return (
+      <div className="text-red-500 p-6 h-screen text-center bg-white text-xl">
+        <div>❌ Unable to fetch store data. Please try again later.</div>
+        <div>Connect Backend properly.</div>
+      </div>
+    );
+  }
+
   if (!selectedCard) {
     return <div className="text-white p-6">Loading store data...</div>;
   }
 
   return (
-    <div>
-      <h1 className='p-2 text-2xl text-center text-white bg-black'>Hi, {commonData?.profile?.name || "User"}</h1>
+    <div >
+      <h1 className='p-2 text-2xl text-center text-white bg-black'>
+        Hi {commonData?.profile?.name ? commonData.profile.name + ", Welcome" : "User, Please Login!"}
+      </h1>
+
       <div className="flex flex-col lg:flex-row gap-6 p-6 h-auto text-white">
-        {/* Left side: Store Cards */}
-        <div className="w-full lg:w-1/4 flex flex-col gap-4">
+        <div className="w-full lg:w-1/4 grid grid-cols-2 gap-4">
           {store.store.map((card) => {
             const isActive = selectedCard?.id === card.id;
             return (
               <button
                 key={card.id}
                 onClick={() => setSelectedCard(card)}
-                className={`h-36 rounded-xl flex items-center justify-center font-semibold transition-all duration-300 text-lg text-white shadow-md cursor-pointer 
-                bg-gradient-to-br ${card.gradient || 'from-blue-600 to-blue-800'} 
+                className={`h-auto rounded-xl flex items-center p-2 justify-center font-semibold transition-all duration-300 text-lg text-white shadow-md cursor-pointer 
+                bg-gradient-to-br ${card.gradient || 'from-yellow-600 to-yellow-800'} 
                 ${isActive ? 'ring-4 ring-yellow-300 scale-105' : ''}`}
               >
                 {card.name.toUpperCase()}
@@ -106,7 +115,6 @@ function Store({ commonData }) {
           })}
         </div>
 
-        {/* Right side: Store Preview & Rating */}
         <div className="w-full lg:w-3/4 rounded-2xl overflow-hidden shadow-xl">
           <div className="relative h-[400px] w-full">
             <img
@@ -122,7 +130,6 @@ function Store({ commonData }) {
             </div>
           </div>
 
-          {/* Rating Section */}
           <form onSubmit={handleSubmit} className="p-6 space-y-3 bg-black/60">
             <div className="flex items-center space-x-1">
               {[1, 2, 3, 4, 5].map((star) => (

@@ -66,4 +66,34 @@ const login = async (req, res) => {
   }
 };
 
-export { signup, login };
+
+const allUsers = async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        address: true,
+        role: true,
+        ratings: true,
+      },
+    });
+
+    return res.status(200).json({
+      message: "users fetched successfully",
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+};
+
+
+export { signup, login, allUsers };

@@ -1,7 +1,7 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaBars, FaTimes, FaChevronDown } from "react-icons/fa";
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import { connect } from "react-redux";
 import axios from "axios";
@@ -120,7 +120,7 @@ const Navbar = ({ commonData, setLogin }) => {
     )
   }
   async function doLogout() {
-    navigate("/");
+    navigate("/login");
     window.location.reload();
     // let response = await axios.post(
     //   import.meta.env.VITE_API_URL + `/auth/logout`,

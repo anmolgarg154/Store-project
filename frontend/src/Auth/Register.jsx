@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
@@ -21,39 +22,47 @@ function Register() {
   const validateForm = () => {
     const newErrors = {};
     
-    // Email validation
     if (!formData.email) {
       newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email address is invalid";
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
     }
     
-    // Name validation
     if (!formData.name) {
       newErrors.name = "Name is required";
-    } else if (formData.name.length < 2) {
-      newErrors.name = "Name must be at least 2 characters";
+    } else if (formData.name.length < 20) {
+      newErrors.name = "Name must be at least 20 characters";
+    } else if (formData.name.length > 60) {
+      newErrors.name = "Name cannot exceed 60 characters";
     }
     
-    // Address validation
     if (!formData.address) {
       newErrors.address = "Address is required";
+    } else if (formData.address.length > 400) {
+      newErrors.address = "Address cannot exceed 400 characters";
     }
     
-    // Role validation
     if (!formData.role) {
       newErrors.role = "Please select a role";
     }
     
-    // Password validation
     if (!formData.password) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    } else {
+      if (formData.password.length < 8 || formData.password.length > 16) {
+        newErrors.password = "Password must be between 8-16 characters";
+      }
+      if (!/[A-Z]/.test(formData.password)) {
+        newErrors.password = newErrors.password || "Password must include at least one uppercase letter";
+      }
+      if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password)) {
+        newErrors.password = newErrors.password || "Password must include at least one special character";
+      }
     }
     
-    // Confirm password
-    if (formData.password !== formData.confirmPassword) {
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
     }
     
@@ -65,7 +74,6 @@ function Register() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Clear specific error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: "" }));
     }
@@ -93,7 +101,6 @@ function Register() {
       
       console.log("Registration Successful:", response.data);
       
-      // Show success message and redirect
       navigate("/login", { 
         state: { 
           notification: {
@@ -106,7 +113,6 @@ function Register() {
       const errorMessage = err.response?.data?.message || "Registration failed!";
       setServerError(errorMessage);
       
-      // If the error is about email already existing, set it as a field error
       if (errorMessage.toLowerCase().includes("email already exists")) {
         setErrors(prev => ({ ...prev, email: "Email already exists" }));
       }
@@ -120,11 +126,10 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="bg-blue-600 p-6 text-white">
+        <div className="bg-yellow-600 p-6 text-white">
           <h2 className="text-3xl font-bold text-center">Create Account</h2>
-          <p className="text-blue-100 text-center mt-2">Join our community today</p>
         </div>
         
         {serverError && (
@@ -138,7 +143,6 @@ function Register() {
         )}
         
         <form className="p-6 space-y-4" onSubmit={handleSubmit}>
-          {/* Email Field */}
           <div>
             <label className="block text-gray-700 text-sm font-medium mb-1">
               Email <span className="text-red-500">*</span>
@@ -150,13 +154,12 @@ function Register() {
               onChange={handleChange}
               placeholder="your.email@example.com"
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                errors.email ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-200"
+                errors.email ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-yellow-200"
               }`}
             />
             {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
           </div>
           
-          {/* Name Field */}
           <div>
             <label className="block text-gray-700 text-sm font-medium mb-1">
               Full Name <span className="text-red-500">*</span>
@@ -166,33 +169,37 @@ function Register() {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="John Doe"
+              placeholder="Enter your full name (20-60 characters)"
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                errors.name ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-200"
+                errors.name ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-yellow-200"
               }`}
             />
             {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+            <p className="mt-1 text-xs text-gray-500">
+              {formData.name ? `${formData.name.length}/60 characters` : "20-60 characters required"}
+            </p>
           </div>
           
-          {/* Address Field */}
           <div>
             <label className="block text-gray-700 text-sm font-medium mb-1">
               Address <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
+            <textarea
               name="address"
               value={formData.address}
               onChange={handleChange}
-              placeholder="123 Main St, City, Country"
+              placeholder="Enter your complete address"
+              rows="3"
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                errors.address ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-200"
+                errors.address ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-yellow-200"
               }`}
             />
             {errors.address && <p className="mt-1 text-sm text-red-500">{errors.address}</p>}
+            <p className="mt-1 text-xs text-gray-500">
+              {formData.address ? `${formData.address.length}/400 characters` : "Maximum 400 characters"}
+            </p>
           </div>
           
-          {/* Role Selection */}
           <div>
             <label className="block text-gray-700 text-sm font-medium mb-1">
               Account Type <span className="text-red-500">*</span>
@@ -202,18 +209,17 @@ function Register() {
               value={formData.role}
               onChange={handleChange}
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors appearance-none bg-white ${
-                errors.role ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-200"
+                errors.role ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-yellow-200"
               }`}
             >
               <option value="">Select your role</option>
               <option value="user">User</option>
               <option value="admin">Admin</option>
-              <option value="Store Owner">Store Owner</option>
+              <option value="storeOwner">Store Owner</option>
             </select>
             {errors.role && <p className="mt-1 text-sm text-red-500">{errors.role}</p>}
           </div>
           
-          {/* Password Field */}
           <div>
             <label className="block text-gray-700 text-sm font-medium mb-1">
               Password <span className="text-red-500">*</span>
@@ -224,9 +230,9 @@ function Register() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="••••••••"
+                placeholder="8-16 characters with uppercase & special char"
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                  errors.password ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-200"
+                  errors.password ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-yellow-200"
                 }`}
               />
               <button
@@ -247,12 +253,30 @@ function Register() {
               </button>
             </div>
             {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
-            {formData.password && formData.password.length < 8 && !errors.password && (
-              <p className="mt-1 text-sm text-orange-500">Recommendation: Use at least 8 characters</p>
+            
+            {formData.password && !errors.password && (
+              <div className="mt-2">
+                <div className="flex gap-1 mb-1">
+                  <span className={`h-1 flex-1 rounded-full ${formData.password.length >= 8 ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                  <span className={`h-1 flex-1 rounded-full ${/[A-Z]/.test(formData.password) ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                  <span className={`h-1 flex-1 rounded-full ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                  <span className={`h-1 flex-1 rounded-full ${formData.password.length <= 16 ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                </div>
+                <ul className="text-xs text-gray-600 space-y-1 pl-5 list-disc">
+                  <li className={formData.password.length >= 8 && formData.password.length <= 16 ? 'text-green-600' : ''}>
+                    Between 8-16 characters
+                  </li>
+                  <li className={/[A-Z]/.test(formData.password) ? 'text-green-600' : ''}>
+                    At least one uppercase letter
+                  </li>
+                  <li className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? 'text-green-600' : ''}>
+                    At least one special character
+                  </li>
+                </ul>
+              </div>
             )}
           </div>
           
-          {/* Confirm Password Field */}
           <div>
             <label className="block text-gray-700 text-sm font-medium mb-1">
               Confirm Password <span className="text-red-500">*</span>
@@ -265,19 +289,18 @@ function Register() {
                 onChange={handleChange}
                 placeholder="••••••••"
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                  errors.confirmPassword ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-200"
+                  errors.confirmPassword ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-yellow-200"
                 }`}
               />
             </div>
             {errors.confirmPassword && <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>}
           </div>
           
-          {/* Submit Button */}
           <div className="pt-2">
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${
+              className={`w-full px-4 py-3 font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-colors ${
                 isSubmitting ? "opacity-70 cursor-not-allowed" : ""
               }`}
             >
@@ -295,18 +318,17 @@ function Register() {
             </button>
           </div>
           
-          {/* Login Link */}
           <div className="text-center text-sm text-gray-600 mt-4">
             Already have an account?{" "}
             <a 
               href="/login" 
-              className="font-medium text-blue-600 hover:underline"
+              className="font-medium text-yellow-600 hover:underline"
               onClick={(e) => {
                 e.preventDefault();
                 navigate("/login");
               }}
             >
-              Sign in
+              Login
             </a>
           </div>
         </form>
